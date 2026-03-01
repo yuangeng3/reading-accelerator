@@ -45,7 +45,9 @@ CRITICAL rules for understanding intent:
       messages: [{ role: "user", content: query }],
     });
 
-    const text = response.content[0].type === "text" ? response.content[0].text : "";
+    let text = response.content[0].type === "text" ? response.content[0].text : "";
+    // Strip markdown code fences if present
+    text = text.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
     return JSON.parse(text);
   } catch (error) {
     console.error("AI search extraction failed:", error);

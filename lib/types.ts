@@ -57,6 +57,13 @@ export interface SearchResponse {
 
 export type ReadingStatus = "want_to_read" | "reading" | "finished";
 
+export interface ReadingPath {
+  id: string;
+  goal: string;
+  content: string;
+  created_at: string;
+}
+
 export interface SavedBook {
   key: string;
   title: string;

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { SavedBook, ReadingStatus, BookWithScore } from "./types";
+import { SavedBook, ReadingStatus, BookWithScore, ReadingPath } from "./types";
 
 interface ReadingListState {
   books: SavedBook[];
@@ -54,6 +54,41 @@ export const useReadingList = create<ReadingListState>()(
     }),
     {
       name: "reading-accelerator-list",
+    }
+  )
+);
+
+interface ReadingPathsState {
+  paths: ReadingPath[];
+  addPath: (input: { goal: string; content: string }) => void;
+  removePath: (id: string) => void;
+}
+
+export const useReadingPaths = create<ReadingPathsState>()(
+  persist(
+    (set) => ({
+      paths: [],
+
+      addPath: (input: { goal: string; content: string }) =>
+        set((state) => ({
+          paths: [
+            {
+              id: crypto.randomUUID(),
+              goal: input.goal,
+              content: input.content,
+              created_at: new Date().toISOString(),
+            },
+            ...state.paths,
+          ],
+        })),
+
+      removePath: (id: string) =>
+        set((state) => ({
+          paths: state.paths.filter((p) => p.id !== id),
+        })),
+    }),
+    {
+      name: "reading-accelerator-paths",
     }
   )
 );

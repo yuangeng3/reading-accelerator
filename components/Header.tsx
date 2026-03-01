@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useReadingList } from "@/lib/store";
-import { BookMarked, Search } from "lucide-react";
+import { BookMarked, Search, Sparkles } from "lucide-react";
 
 export default function Header() {
   const bookCount = useReadingList((s) => s.books.length);
@@ -23,6 +23,13 @@ export default function Header() {
           >
             <Search className="w-4 h-4" />
             Search
+          </Link>
+          <Link
+            href="/discover"
+            className="flex items-center gap-1.5 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
+          >
+            <Sparkles className="w-4 h-4" />
+            Discover
           </Link>
           <Link
             href="/list"

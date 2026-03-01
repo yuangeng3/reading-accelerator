@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+:root {
+  --color-bg: #fafaf9;
+  --color-text: #1c1917;
+  --color-text-muted: #78716c;
+  --color-accent: #1d4ed8;
+  --color-accent-hover: #1e40af;
+  --color-success: #15803d;
+  --color-border: #e7e5e4;
+  --color-card: #ffffff;
+  --color-badge-free: #dcfce7;
+  --color-badge-free-text: #166534;
+  --color-badge-library: #dbeafe;
+  --color-badge-library-text: #1e40af;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+}

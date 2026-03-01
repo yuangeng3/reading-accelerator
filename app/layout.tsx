@@ -5,6 +5,10 @@ export const metadata: Metadata = {
   title: "Reading Accelerator — Discover Timeless Books, Free at Your Library",
   description:
     "Find the best books ranked by timelessness, not trends. Read public domain classics free on archive.org or borrow from your local library.",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function RootLayout({

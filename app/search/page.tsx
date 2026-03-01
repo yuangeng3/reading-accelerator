@@ -15,6 +15,7 @@ function SearchContent() {
   const [numFound, setNumFound] = useState(0);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [explanation, setExplanation] = useState<string | null>(null);
 
   const initialQuery = searchParams.get("q") ?? "";
 
@@ -32,6 +33,7 @@ function SearchContent() {
         const data = await resp.json();
         setBooks(data.books);
         setNumFound(data.numFound);
+        setExplanation(data.explanation ?? null);
       } catch (err) {
         console.error(err);
         setBooks([]);
@@ -71,6 +73,11 @@ function SearchContent() {
         <>
           <div className="text-sm text-[var(--color-text-muted)]">
             {numFound.toLocaleString()} results · sorted by Lindy Score
+            {explanation && (
+              <span className="ml-2 text-[var(--color-accent)]">
+                — {explanation}
+              </span>
+            )}
           </div>
           <div className="space-y-3">
             {books.map((book) => (

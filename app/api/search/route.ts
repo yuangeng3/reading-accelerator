@@ -26,30 +26,46 @@ async function extractSearchTerms(query: string): Promise<{
   searches: Array<{ query: string; subject?: string; author?: string }>;
   explanation: string;
 }> {
-  const response = await anthropic.messages.create({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 300,
-    system: `You convert natural language book requests into Open Library search queries.
+  try {
+    const response = await anthropic.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 300,
+      system: `You convert natural language book requests into Open Library search queries.
 Return JSON only, no markdown. Format:
 {"searches":[{"query":"keyword search","subject":"optional subject filter","author":"optional author"}],"explanation":"one sentence explaining what you're searching for"}
 
-Rules:
+CRITICAL rules for understanding intent:
+- Distinguish between WHO the reader is vs WHAT they want to read. "my son has ADHD" means the READER has attention issues (needs engaging, fast-paced, visual books) — do NOT search for "ADHD books"
+- If someone mentions a specific book title (e.g., "Bad Guys", "Dog Man", "Diary of a Wimpy Kid"), search for: (1) that exact author's other works, (2) books with similar style/themes/format, (3) the genre/format (e.g., graphic novels, comic fiction)
+- Age/grade info means filter for age-appropriate reading level, not search for "children age 7"
+- Attention/focus issues mean prioritize: graphic novels, illustrated books, short chapters, humor, action — these are FORMAT preferences, not topics
 - Generate 1-3 searches to cover the request from different angles
-- Use simple keywords, not full sentences
-- For age-appropriate requests, include the age group in the subject
-- For genre preferences ("bad guys", "adventure"), map to proper subjects
+- Use simple keywords that Open Library will actually match
 - Keep each query under 5 words`,
-    messages: [{ role: "user", content: query }],
-  });
+      messages: [{ role: "user", content: query }],
+    });
 
-  const text = response.content[0].type === "text" ? response.content[0].text : "";
-  try {
+    const text = response.content[0].type === "text" ? response.content[0].text : "";
     return JSON.parse(text);
-  } catch {
-    // Fallback: just use the original query cleaned up
+  } catch (error) {
+    console.error("AI search extraction failed:", error);
+    // Fallback: extract meaningful words from the query
+    const stopWords = new Set(["my", "is", "has", "a", "the", "i", "me", "we", "our", "he", "she", "it", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "like", "more", "run", "can", "do", "does", "what", "how", "who", "where", "when", "why"]);
+    const keywords = query
+      .replace(/[?.,!'"]/g, "")
+      .split(/\s+/)
+      .filter((w) => w.length > 2 && !stopWords.has(w.toLowerCase()))
+      .slice(0, 5);
+
     return {
-      searches: [{ query: query.replace(/[?.,!]/g, "").trim() }],
-      explanation: "Searching directly",
+      searches: [
+        { query: keywords.join(" ") },
+        // Also try subset searches for better coverage
+        ...(keywords.length > 3
+          ? [{ query: keywords.slice(0, 3).join(" ") }]
+          : []),
+      ],
+      explanation: `Searching for: ${keywords.join(", ")}`,
     };
   }
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Header from "@/components/Header";
 import { CuratedBook } from "@/lib/curated";
 import { BookWithScore } from "@/lib/types";
@@ -13,6 +14,8 @@ import {
   ExternalLink,
   Store,
   ArrowLeft,
+  Library,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -29,6 +32,24 @@ interface Props {
 export default function BookPageClient({ curated, book }: Props) {
   const { addBook, removeBook, isBookSaved } = useReadingList();
   const saved = book ? isBookSaved(book.key) : false;
+  const [libraryResult, setLibraryResult] = useState<string | null>(null);
+  const [libraryLoading, setLibraryLoading] = useState(false);
+
+  const checkLibrary = async () => {
+    setLibraryLoading(true);
+    setLibraryResult(null);
+    try {
+      const params = new URLSearchParams({ title: curated.title });
+      if (book?.isbn?.[0]) params.set("isbn", book.isbn[0]);
+      const resp = await fetch(`/api/library?${params}`);
+      const data = await resp.json();
+      setLibraryResult(data.result || data.error || "No result");
+    } catch {
+      setLibraryResult("Could not check library. Service may be offline.");
+    } finally {
+      setLibraryLoading(false);
+    }
+  };
 
   return (
     <>
@@ -114,6 +135,18 @@ export default function BookPageClient({ curated, book }: Props) {
                 Read Free on Archive.org
               </a>
             )}
+            <button
+              onClick={checkLibrary}
+              disabled={libraryLoading}
+              className="flex items-center justify-center gap-2 px-4 py-3 border border-[var(--color-border)] bg-[var(--color-badge-library)] text-[var(--color-badge-library-text)] text-sm font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {libraryLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Library className="w-4 h-4" />
+              )}
+              Check NYPL
+            </button>
             <a
               href={buildBookshopUrl(curated.title, curated.author)}
               target="_blank"
@@ -148,6 +181,13 @@ export default function BookPageClient({ curated, book }: Props) {
               </button>
             )}
           </div>
+
+          {/* Library availability result */}
+          {libraryResult && (
+            <div className="mt-3 p-4 bg-blue-50 border border-blue-100 rounded-lg text-sm text-[var(--color-text)] whitespace-pre-wrap">
+              {libraryResult}
+            </div>
+          )}
         </div>
 
         {/* Details */}

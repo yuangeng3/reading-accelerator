@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { BookWithScore } from "@/lib/types";
 import { useReadingList } from "@/lib/store";
 import {
@@ -10,6 +11,8 @@ import {
   Star,
   Clock,
   Store,
+  Library,
+  Loader2,
 } from "lucide-react";
 
 function LindyBadge({ score }: { score: number }) {
@@ -40,6 +43,24 @@ function buildBookshopUrl(title: string, authors: string): string {
 export default function BookCard({ book }: { book: BookWithScore }) {
   const { addBook, removeBook, isBookSaved } = useReadingList();
   const saved = isBookSaved(book.key);
+  const [libraryResult, setLibraryResult] = useState<string | null>(null);
+  const [libraryLoading, setLibraryLoading] = useState(false);
+
+  const checkLibrary = async () => {
+    setLibraryLoading(true);
+    setLibraryResult(null);
+    try {
+      const params = new URLSearchParams({ title: book.title });
+      if (book.isbn?.[0]) params.set("isbn", book.isbn[0]);
+      const resp = await fetch(`/api/library?${params}`);
+      const data = await resp.json();
+      setLibraryResult(data.result || data.error || "No result");
+    } catch {
+      setLibraryResult("Could not check library. Service may be offline.");
+    } finally {
+      setLibraryLoading(false);
+    }
+  };
 
   return (
     <div className="flex gap-4 p-4 bg-[var(--color-card)] border border-[var(--color-border)] rounded-lg hover:shadow-sm transition-shadow">
@@ -128,6 +149,18 @@ export default function BookCard({ book }: { book: BookWithScore }) {
               Read Free
             </a>
           )}
+          <button
+            onClick={checkLibrary}
+            disabled={libraryLoading}
+            className="inline-flex items-center gap-1 text-xs text-[var(--color-accent)] hover:underline disabled:opacity-50"
+          >
+            {libraryLoading ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              <Library className="w-3.5 h-3.5" />
+            )}
+            Check NYPL
+          </button>
           <a
             href={book.open_library_url}
             target="_blank"
@@ -147,6 +180,13 @@ export default function BookCard({ book }: { book: BookWithScore }) {
             Buy (Indie)
           </a>
         </div>
+
+        {/* Library availability result */}
+        {libraryResult && (
+          <div className="mt-3 p-3 bg-blue-50 border border-blue-100 rounded text-xs text-[var(--color-text)] whitespace-pre-wrap">
+            {libraryResult}
+          </div>
+        )}
       </div>
     </div>
   );
